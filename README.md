@@ -34,6 +34,8 @@ python train_synthetic.py --problem 2d_rot8 --model share_conv  # MSR+Conv on 2d
 python train_synthetic.py --problem 2d_rot8 --model conv  # MAML+Conv on 2d_rot8 problem.
 ```
 
+In order to run experiments with `share_conv`, use PyTorch `1.4.0`. Neither PyTorch `1.1` nor PyTorch `1.8.0` will work. 
+
 ## Augmented-(Omniglot/Miniimagenet)
 
 WIP

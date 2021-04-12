@@ -53,6 +53,28 @@ def generate_1d_low_rank(out_path, rank=2):
     np.savez(out_path, x=xs, y=ys, w=ws)
 
 
+def generate_1d_low_rank_kernel5(out_path, rank=2, kernel_size=5):
+    lc_layer = LocallyConnected1d(1, 1, 68, bias=False, kernel_size=kernel_size)
+    xs, ys, ws = [], [], []
+    connectivity = softmax(np.random.randn(68, rank), axis=1)  # shape == (68, rank)
+    for task_idx in range(10000):
+        basis = np.random.randn(rank, kernel_size)
+        filt = np.dot(connectivity, basis)  # shape == (68, 3)
+        filt = np.reshape(filt, (1, 1, 1, 68, kernel_size)).astype(np.float32)
+        ws.append(filt)
+        lc_layer.weight = nn.Parameter(torch.from_numpy(filt))
+        task_xs, task_ys = [], []
+        inp = np.random.randn(20, 1, 72).astype(np.float32)
+        result = lc_layer(torch.from_numpy(inp))  # (20, 1, 68)
+        result = result.cpu().detach().numpy()
+        xs.append(inp)
+        ys.append(result)
+        if task_idx % 100 == 0:
+            print(f"Finished generating task {task_idx}")
+    xs, ys, ws = np.stack(xs), np.stack(ys), np.stack(ws)
+    np.savez(out_path, x=xs, y=ys, w=ws)
+
+
 def generate_2d_rot4(out_path):
     r2_act = gspaces.Rot2dOnR2(N=4)
     feat_type_in = gnn.FieldType(r2_act, [r2_act.trivial_repr])
@@ -119,6 +141,8 @@ TYPE_2_PATH = {
     "2d_rot8": "./data/2d_rot8.npz",
     "2d_rot8_flip": "./data/2d_rot8_flip.npz",
     "2d_rot4": "./data/2d_rot4.npz",
+    "rank2_kernel5": "./data/rank2_kernel5.npz",
+    "rank5_kernel5": "./data/rank5_kernel5.npz",
 }
 
 
@@ -141,6 +165,10 @@ def main():
         generate_2d_rot8_flip(out_path)
     elif args.problem == "2d_rot4":
         generate_2d_rot4(out_path)
+    elif args.problem == "rank2_kernel5":
+        generate_1d_low_rank_kernel5(out_path, rank=2, kernel_size=5)
+    elif args.problem == "rank5_kernel5":
+        generate_1d_low_rank_kernel5(out_path, rank=5, kernel_size=5)
     else:
         raise ValueError(f"Unrecognized problem {args.problem}")
 

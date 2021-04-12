@@ -128,7 +128,7 @@ def main():
 			net = nn.Sequential(layers.ShareLinearFull(70, 68, bias=False, latent_size=c_o)).to(device)
 		else:
 			raise ValueError(f"Invalid model {cfg.model}")
-	elif cfg.problem in ["rank1", "rank2", "rank5"]:
+	elif cfg.problem in ["rank1", "rank2", "rank5", "rank2_kernel5", "rank5_kernel5"]:
 		if cfg.model == "lc":
 			net = nn.Sequential(layers.LocallyConnected1d(1, 1, 68, kernel_size=3, bias=False)).to(
 				device
@@ -138,8 +138,11 @@ def main():
 		elif cfg.model == "conv":
 			net = nn.Sequential(nn.Conv1d(1, 1, kernel_size=3, bias=False)).to(device)
 		elif cfg.model == "share_fc":
-			latent = {"rank1": 3, "rank2": 6, "rank5": 30}[cfg.problem]
-			net = nn.Sequential(layers.ShareLinearFull(70, 68, bias=False, latent_size=latent)).to(
+			latent = {"rank1": 3, "rank2": 6, "rank5": 30, "rank2_kernel5": 6, "rank5_kernel5": 30}[cfg.problem]
+			in_features = 70
+			if cfg.problem in ["rank2_kernel5", "rank5_kernel5"]:
+				in_features = 72
+			net = nn.Sequential(layers.ShareLinearFull(in_features, 68, bias=False, latent_size=latent)).to(
 				device
 			)
 		elif cfg.model == "share_conv":

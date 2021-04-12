@@ -109,9 +109,17 @@ def main():
 	cfg = wandb.config
 	device = torch.device(cfg.device)
 	db = SyntheticLoader(device, problem=cfg.problem, k_spt=cfg.k_spt, k_qry=cfg.k_qry)
+	
+	if cfg.problem in ["2d_rot8_flip", "2d_rot8", "2d_rot4"]:
+		if cfg.problem == "2d_rot8": # C_8, 8 elements
+			c_o = 24
+		elif cfg.problem == "2d_rot8_flip": # D_8, 16 elements
+			c_o = 48
+		elif cfg.problem == "2d_rot4": # C_4, 4 elements 
+			c_o = 12 
+		else:
+			raise NotImplementedError 
 
-	if cfg.problem in ["2d_rot8_flip", "2d_rot8"]:
-		c_o = 24 if cfg.problem == "2d_rot8" else 48
 		if cfg.model == "share_conv":
 			net = nn.Sequential(layers.ShareConv2d(1, c_o, 3, bias=False)).to(device)
 		elif cfg.model == "conv":

@@ -53,6 +53,25 @@ def generate_1d_low_rank(out_path, rank=2):
     np.savez(out_path, x=xs, y=ys, w=ws)
 
 
+def generate_2d_rot4(out_path):
+    r2_act = gspaces.Rot2dOnR2(N=4)
+    feat_type_in = gnn.FieldType(r2_act, [r2_act.trivial_repr])
+    feat_type_out = gnn.FieldType(r2_act, 3 * [r2_act.regular_repr])
+    conv = gnn.R2Conv(feat_type_in, feat_type_out, kernel_size=3, bias=False)
+    xs, ys, ws = [], [], []
+    for task_idx in range(10000):
+        gnn.init.generalized_he_init(conv.weights, conv.basisexpansion)
+        inp = gnn.GeometricTensor(torch.randn(20, 1, 32, 32), feat_type_in)
+        result = conv(inp).tensor.detach().cpu().numpy()
+        xs.append(inp.tensor.detach().cpu().numpy())
+        ys.append(result)
+        ws.append(conv.weights.detach().cpu().numpy())
+        if task_idx % 100 == 0:
+            print(f"Finished generating task {task_idx}")
+    xs, ys, ws = np.stack(xs), np.stack(ys), np.stack(ws)
+    np.savez(out_path, x=xs, y=ys, w=ws)
+
+
 def generate_2d_rot8(out_path):
     r2_act = gspaces.Rot2dOnR2(N=8)
     feat_type_in = gnn.FieldType(r2_act, [r2_act.trivial_repr])
@@ -99,6 +118,7 @@ TYPE_2_PATH = {
     "rank5": "./data/rank5.npz",
     "2d_rot8": "./data/2d_rot8.npz",
     "2d_rot8_flip": "./data/2d_rot8_flip.npz",
+    "2d_rot4": "./data/2d_rot4.npz",
 }
 
 
@@ -119,6 +139,8 @@ def main():
         generate_2d_rot8(out_path)
     elif args.problem == "2d_rot8_flip":
         generate_2d_rot8_flip(out_path)
+    elif args.problem == "2d_rot4":
+        generate_2d_rot4(out_path)
     else:
         raise ValueError(f"Unrecognized problem {args.problem}")
 
